@@ -1,0 +1,48 @@
+name: board
+
+# The kernel is built by ios-sweet's own workflow. What is worth checking here is
+# that this repository still agrees with ios-sweet: the patch series points at
+# files that exist, the shim patch still applies, and the DRAM window in
+# board.toml does not overlap a Qualcomm carve-out.
+
+on:
+  push:
+    paths:
+      - "board.toml"
+      - "configs/**"
+      - "scripts/**"
+      - "patches/**"
+      - ".github/workflows/board.yml"
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: AppleCampus/ios-sweet
+          path: ios-sweet
+
+      - name: DRAM windows, framebuffer fit, patch series
+        run: python3 scripts/check-board.py --sweet ios-sweet
+
+      - name: Shim patches still apply
+        run: |
+          cd ios-sweet/shim
+          for p in "$GITHUB_WORKSPACE"/patches/shim/*.patch; do
+            echo "== $(basename "$p")"
+            git apply --check "$p"
+          done
+
+      - name: Python syntax
+        run: python3 -m py_compile configs/rmx1971.adt.py scripts/build-boot-image.py scripts/check-board.py
+
+      - name: Generate an ADT for both windows
+        run: |
+          python3 configs/rmx1971.adt.py -o /tmp/default.adt --sweet ios-sweet
+          python3 configs/rmx1971.adt.py -o /tmp/max.adt --sweet ios-sweet --phys-base 0xb8400000
+          ls -l /tmp/default.adt /tmp/max.adt
