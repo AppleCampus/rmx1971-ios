@@ -1,5 +1,7 @@
 # rmx1971-ios
 
+[![board](https://github.com/AppleCampus/rmx1971-ios/actions/workflows/board.yml/badge.svg)](https://github.com/AppleCampus/rmx1971-ios/actions/workflows/board.yml)
+
 **Apple's iOS 16 running on a Realme 5 Pro** (`RMX1971`, Qualcomm SDM712 / SM712, OPPO `19691`).
 
 This is the board repository for the [ios-sweet](https://github.com/AppleCampus/ios-sweet)
