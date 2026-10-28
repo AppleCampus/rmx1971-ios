@@ -1,0 +1,1 @@
+debug=0xc serial=3 cpus=8 keepsyms=1 -enable_kprintf_spam -noprogress rd=ufsroot0 unentitled_ios_sim_launch=1 ignition_level=1 wdt_test=no_user_checkin ufsrw=1 rootrw=1 launchd_unsecure_cache=1 wdt=-1 sweetusb=2 sweetkeys=0 sweettouch=0 sweetsample=SpringBoard,backboardd,launchd sweethimax=1 sweetmaxdelay=30

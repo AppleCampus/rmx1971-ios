@@ -1,0 +1,27 @@
+# Apple artifacts and device dumps: never commit these.
+research/
+d22ap.adt
+*.im4p
+*.ipsw
+ios16-root.img
+ios16-root.simg
+*.simg
+*.zst
+
+# Build output
+out/
+build/
+*.o
+*.elf
+
+# Device dumps (IMEI, serial, calibration)
+backup/
+dtb/
+recovery/
+persist/
+modemst*
+
+# Tooling noise
+__pycache__/
+*.pyc
+.venv/

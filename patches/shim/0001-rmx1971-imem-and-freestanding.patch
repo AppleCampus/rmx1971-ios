@@ -1,0 +1,56 @@
+--- a/shim.c
++++ b/shim.c
+@@ -12,7 +12,7 @@
+ #include "loader.h"
+ #include "ufs.h"
+ 
+-#define IMEM_RESTART_REASON	0x146aa65cUL	/* qcom,msm-imem restart_reason@65c */
++#define IMEM_RESTART_REASON	0x146bf65cUL	/* qcom,msm-imem@146bf000 restart_reason@65c, RMX1971 live FDT */
+ #define RESTART_BOOTLOADER	0x77665500U
+ #define PSHOLD			0x0c264000UL
+ 
+@@ -143,12 +143,11 @@
+ 		return;
+ 	}
+ 	con_clear(BLUE);
+-	switch (slot & 3) {
+-	case 0: con_str("PANIC", "SYNC"); break;
+-	case 1: con_str("PANIC", "IRQ"); break;
+-	case 2: con_str("PANIC", "FIQ"); break;
+-	default: con_str("PANIC", "SERROR"); break;
+-	}
++	/* 2D char array on purpose: a switch/if-chain over identical calls gets
++	 * lowered to a .rodata table of ABSOLUTE string pointers, which breaks
++	 * the run-anywhere image; raw bytes + runtime indexing cannot be tabled */
++	static const char kinds[4][8] = { "SYNC", "IRQ", "FIQ", "SERROR" };
++	con_str("PANIC", kinds[slot & 3]);
+ 	con_hex2("SLOT", "n=", slot, "cpu=", rsr("mpidr_el1"));
+ 	con_str("STAGE", stage);
+ 	con_hex("ESR", rsr("esr_el1"));
+@@ -377,7 +376,7 @@
+ 	/* An xnu payload in the ramdisk means: boot it (MMU stays off). */
+ 	stage = "loader";
+ 	con_clear(RED);
+-	con_str("SHIM", "sweet milestone 4: xnu loader");
++	con_str("SHIM", "rmx1971 m1: xnu loader");
+ 	con_skip();
+ 	const char *why = loader_boot(dtb);
+ 	con_str("LOADER", why);
+--- a/ufs.c
++++ b/ufs.c
+@@ -32,6 +32,15 @@
+ 
+ #define BLOCK		4096u
+ 
++/* freestanding build: clang's -ffreestanding implies -fno-builtin, so strcmp
++ * stays an external call (gcc inlines the constant-arg uses instead) */
++int strcmp(const char *a, const char *b)
++{
++	while (*a && *a == *b)
++		a++, b++;
++	return (unsigned char)*a - (unsigned char)*b;
++}
++
+ static inline uint32_t ufs_rd(uint32_t off) { return *(volatile uint32_t *)(UFS_BASE + off); }
+ static inline void ufs_wr(uint32_t off, uint32_t v) { *(volatile uint32_t *)(UFS_BASE + off) = v; }
+ 

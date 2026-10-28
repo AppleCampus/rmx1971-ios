@@ -1,0 +1,7 @@
+# The patch files and shell scripts are consumed on Linux (ios-sweet CI) and by
+# git apply, so they must stay LF even on a Windows checkout.
+* text=auto eol=lf
+*.patch text eol=lf
+*.sh text eol=lf
+*.bin binary
+*.adt binary

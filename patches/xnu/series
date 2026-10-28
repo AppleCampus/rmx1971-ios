@@ -1,0 +1,24 @@
+# Board patches, one per line in application order.
+#
+# These live in ios-sweet/xnu/patches (that is where its CI looks) and are
+# listed here so the board set is reviewable in one place. Numbering continues
+# from upstream; the next free slot is 0090.
+
+# HX83112A touch over GENI SPI, TLMM volume keys, PM660 PON power key.
+0082-sweet-himax-touch.patch
+
+# Console log flushes synchronously: without it the last lines before a hang
+# never reach the persistent ring, which is all we have on a board with no UART.
+0083-sweet-log-sync-flush.patch
+
+# RPMh vote for the touch rail; the bootloader leaves it off.
+0084-sweet-rpmh-rmx1971.patch
+
+# USB bring-up. 0085-0088 are diagnostics + the two real fixes (core reset and
+# the forced device role); 0089 is framebuffer source diag. Drop them once
+# DWC3 enumerates and renumber.
+0085-sweet-usb-dma-diag.patch
+0086-sweet-usb-reset.patch
+0087-sweet-fb-heartbeat.patch
+0088-sweet-usb-devmode.patch
+0089-sweet-fb-src-diag.patch

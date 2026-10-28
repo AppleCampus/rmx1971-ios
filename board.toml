@@ -1,0 +1,105 @@
+# Board definition for the Realme 5 Pro (RMX1971) running ios-sweet.
+#
+# Everything here was measured on a real handset: the live FDT pulled through
+# TWRP (see docs/evidence/), the SPMI/DWC3 register reads, and the stock
+# boot.img header. Numbers that come from Apple instead of Qualcomm are marked
+# [apple] and are only placeholders for the iPhone X userland we run.
+
+[board]
+name = "Realme 5 Pro"
+codename = "RMX1971"
+soc = "Qualcomm SDM712 (SM712, OPPO 19691)"
+cpu = "2x Kryo 360 Gold (Cortex-A75) @2.3GHz + 6x Kryo 360 Silver (Cortex-A55) @1.7GHz"
+arch = "arm64"
+ram = "4GiB LPDDR4X"
+
+[identity]
+# [apple] The userland is the iPhone X (D22AP) iOS 16.7.16 root filesystem, so
+# MobileGestalt must be told it is an iPhone X. The xiaomi,sweet compatible is
+# kept because the SWEET machine config matches on it.
+target_type = "D22"
+target_sub_type = "D22AP"
+model = "iPhone10,3"
+chip_id = 0x8015
+compatible = ["D22AP", "iPhone10,3", "xiaomi,sweet", "qcom,sdm712", "AppleARM"]
+ecid = 0x524D585100000001
+d22ap_adt = "research/d22ap.adt"   # extracted from the IPSW, never committed
+
+[memory]
+# One contiguous physical range is all arm_vm_init() accepts: XNU gets a single
+# dram-base/dram-size pair from /chosen and has no reserved-memory mechanism.
+ddr_base = 0x80000000
+ddr_top = 0x17E2C0000            # DDR0 2GiB + DDR1 0x7E2C0000 = 3.98GiB
+low_carveout_end = 0xB8300000    # last Qualcomm reservation in the low bank
+# kboot_uboot_logmem ends at 0xB8300000; cont_splash is 0x9C000000+0x2300000
+# (the 35MiB framebuffer ABL leaves behind and the kernel draws into).
+# Default: upper bank only. Safe since the first boot image.
+default_base = 0x100000000
+default_size = 0x7E2C0000
+# Maximum: every byte above the last carve-out, upper bank included.
+# Built and flashed, not yet verified on hardware.
+max_base = 0xB8400000
+max_size = 0xC5EC0000            # 0x17E2C0000 - 0xB8400000 = 3.09GiB
+panic_log_size = 0x100000        # carved off the top, exposed as /pram
+
+[adt]
+soc_base = 0x01000000
+gicd = 0x17A00000
+gicd_size = 0x10000
+gicr = 0x17A60000
+gicr_size = 0x100000
+timebase_frequency = 19200000
+virtual_timer_intid = 19
+
+[display]
+# [apple] iOS is told it drives an iPhone X panel; the kernel composites at
+# 1125x2436 and squashes into the 1080x2340 ABL framebuffer.
+panel_width = 1080
+panel_height = 2340
+canvas_width = 1125
+canvas_height = 2436
+fb_base = 0x9C000000
+fb_size = 0x2300000              # 35MiB cont_splash carve-out
+
+[storage]
+ufs_base = 0x01D84000
+ufs_size = 0x3000
+boot_partition = "/dev/block/sde10"
+boot_size = 0x4000000            # 64MiB, stock boot.img lives here
+
+[usb]
+# DWC3 core inside the QUSB PHY wrapper; ABL leaves GCTL.PrtCapDir = 0b10 (OTG)
+# which makes the core refuse the device role.
+dwc3_base = 0x0A600000
+
+[touch]
+# Himax HX83112A over GENI SPI SE0, 56-byte event frames, INT on a TLMM gpio.
+spi_base = 0x08800000
+controller = "himax-hx83112a"
+
+[buttons]
+# TLMM gpios are active-low; the power key is NOT a gpio, it arrives over SPMI
+# from the PM660 PON block (PPID 0x08, PON_RT_STS bit 0).
+volume_up_gpio = 24
+volume_down_gpio = 92
+power_ppid = 0x08
+power_rt_sts = 0x810
+spmi_arbiter_core = 0x0C440000
+spmi_obs = 0x0E600000
+
+[partitions]
+# fastboot flash boot writes /dev/block/sde10; nothing else is touched.
+flash_target = "boot"
+
+[bootimg]
+# Copied from the stock boot.img (header v1): ABL on this board rejects or
+# misloads anything that does not mirror these values.
+page_size = 4096
+kernel_addr = 0x8000
+ramdisk_addr = 0x1000000
+tags_addr = 0x100
+header_version = 1
+os_version = 0x200001a7          # Android 10.0.0, as in stock
+dtb_idx = 3                      # androidboot.dtb_idx=3: ABL picks the base FDT
+                                 # out of the FDTs appended after the kernel
+cmdline = """console=ttyMSM0,115200n8 earlycon=msm_geni_serial,0xA90000 androidboot.hardware=qcom androidboot.console=ttyMSM0 msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 service_locator.enable=1 androidboot.configfs=true androidboot.usbcontroller=a600000.dwc3 swiotlb=1 loop.max_part=7 kpti=off printk.devkmsg=on androidboot.init_fatal_reboot_target=recovery cgroup_disable=pressure"""
