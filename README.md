@@ -26,7 +26,7 @@ stall the compositor for minutes.
 
 | Area | State |
 | --- | --- |
-| Boot | Unlocked bootloader → shim → XNU. `fastboot boot` for a trial, `fastboot flash boot` to persist. Recovery, modem and persist are never touched |
+| Boot | Unlocked bootloader → shim → XNU, written with `fastboot flash boot` (this ABL has no `boot` command). Recovery, modem and persist are never touched |
 | CPU | All 8 cores via PSCI (2× A75 + 6× A55), 16K pages, GICv3, architected timers |
 | Memory | 2.01 GiB of the upper DDR bank by default; a 3.09 GiB window is built but not yet verified |
 | Storage | Own UFS host driver at `0x1d84000`; root is a journaled HFS+ volume, read/write |
@@ -104,8 +104,8 @@ This recipe reproduces the image currently on the handset: dropping in the m10
 ### Flash
 
 ```sh
-./scripts/flash-boot.sh out/boot.img          # fastboot boot: nothing is written
-./scripts/flash-boot.sh out/boot.img --flash  # writes /dev/block/sde10
+./scripts/flash-boot.sh out/boot.img          # writes /dev/block/sde10, then reboots
+./scripts/flash-boot.sh out/boot.img --boot   # only where the ABL still has `boot`
 ```
 
 ### Where the numbers came from
@@ -133,7 +133,7 @@ were read with a small MMIO probe, and the boot header values were taken from
 | `patches/shim/` | Board patches to ios-sweet's `shim/`, applied before compiling |
 | `scripts/build-boot-image.py` | ADT → payload → shim → boot.img |
 | `scripts/check-board.py` | Window arithmetic, framebuffer fit, patch presence |
-| `scripts/flash-boot.sh` | `fastboot boot` / `fastboot flash boot` |
+| `scripts/flash-boot.sh` | `fastboot flash boot` (default), `--boot` where supported |
 | `firmware/` | Stock appended DTBs, required by ABL's `dtb_idx=3` |
 | `docs/bringup.md` | What each subsystem needs, in the order it came up |
 | `docs/evidence/` | Measurements and register dumps per subsystem |

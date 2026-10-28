@@ -22,7 +22,8 @@ Working notes for anyone (human or model) touching this repository. Read
 3. **No tokens.** A GitHub PAT does not belong in a working tree, a script or a
    commit. Use `GH_TOKEN` in the environment.
 4. **Do not touch `recovery`, `modem`, `persist`, `vbmeta`.** Only `boot` is
-   ours. `scripts/flash-boot.sh` defaults to `fastboot boot`.
+   ours, and it is written with `fastboot flash boot`: this ABL has no `boot`
+   command, so `fastboot boot` returns `unknown command` after the transfer.
 5. **Patch numbering continues from upstream.** The next free slot is `0090`.
    Never renumber an existing patch: CI builds are keyed on the series.
 
@@ -56,8 +57,10 @@ screen console / TWRP log ring        →  docs/evidence/
 - **Absolute relocations.** `start.S` stores the image size as an absolute
   value; C objects must have none, or the shim only works at the address it was
   linked for. The build fails loudly on purpose.
-- **`fastboot boot` vs `flash`.** A bad image that is only booted costs one
-  reboot; the same image flashed costs a recovery session.
+- **There is no `fastboot boot` on this board.** OPPO/realme's ABL keeps
+  `download` and `flash` only; `boot` answers `FAILED (remote: 'unknown
+  command')`. Every test is a flash of `boot`, which costs one `fastboot flash`
+  to undo -- so keep the last known-good image next to the new one.
 - **Windows adb.** `adb push` needs `MSYS_NO_PATHCONV=1` under Git Bash, and
   `adb shell "cat > file"` goes through a pty that eats binary data — use
   `adb push` to a temp path then `dd`.
